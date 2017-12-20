@@ -7,6 +7,7 @@
 #define DESCENDANTS 4
 #define FAMILY 5
 
+/* Tree structure */
 typedef struct node
 {
     struct node *parent;
@@ -28,29 +29,7 @@ void write_node(node *tree, FILE *file);
 void load_node(node *tree, FILE *file);
 void remove_tree(node *tree);
 
-void check_print(node *tree, int n)
-{
-    int i;
-    if (tree)
-	{
-        check_print(tree->right, n+3);
-        for (i=0; i<n; i++)
-            putchar(' ');
-        printf("%d\n", tree->num);
-        check_print(tree->left, n+3);
-    }
-}
-
-void print_mas(node *tree)
-{
-    if (tree)
-	{
-        print_mas(tree->left);
-        printf("%d", tree->num);
-        print_mas(tree->right);
-    }
-}
-
+/* add node */
 int add_node(int num, node *current, int target, char type, int launchflag)
 {
     static int flag;
@@ -70,12 +49,12 @@ int add_node(int num, node *current, int target, char type, int launchflag)
 		{
             if (current->left == 0)
 			{
-                tmp = (node*)malloc(sizeof(node));
-                tmp->left = tmp->right = 0;
-                tmp->parent = current;
-                current->left = tmp;
-                tmp->num = num;
-                flag = ntmp = 1;
+               	 tmp = (node*)malloc(sizeof(node));
+              	 tmp->left = tmp->right = 0;
+              	 tmp->parent = current;
+              	 current->left = tmp;
+               	 tmp->num = num;
+              	 flag = ntmp = 1;
             }
             else if (current->right == 0)
 			{
@@ -105,7 +84,7 @@ int add_node(int num, node *current, int target, char type, int launchflag)
             else 
 			{
                 if (current->right)
-                    ntmp = add_node(num, current->right, target, PARENT, 0);
+                ntmp = add_node(num, current->right, target, PARENT, 0);
             }
         }
     }
@@ -161,7 +140,9 @@ int add_node(int num, node *current, int target, char type, int launchflag)
             }
         }
         else
-            return 0;
+		{
+       	return 0;
+		}
     }
     else 
 	{
@@ -172,15 +153,7 @@ int add_node(int num, node *current, int target, char type, int launchflag)
     return (ntmp);
 }
 
-void load_node(node *tree, FILE *file)
-{
-    int targetn, num;
-    if (!fread(&targetn, sizeof(int), 1, file)) return;
-    if (!fread(&num, sizeof(int), 1, file)) return;
-    add_node(num, tree, targetn, PARENT, 1);
-    load_node(tree, file);
-}
-
+/* create node */
 node* create_root(int num)
 {
     node *tmp;
@@ -190,6 +163,7 @@ node* create_root(int num)
     return tmp;
 }
 
+/* remove element */
 int remove_element(node *tree, int numtos, char typedel)
 {
     static int flag;
@@ -323,7 +297,7 @@ int remove_element(node *tree, int numtos, char typedel)
         }
 
         else
-            printf("Wrong 3rd parameter of removeelemnt\n");
+            printf("Wrong 3rd parameter of remove_element\n");
     }
     else
         return 0;
@@ -331,6 +305,43 @@ int remove_element(node *tree, int numtos, char typedel)
     if (!flag) tmp = remove_element(tree->right, numtos, typedel);
     if (!tree->parent) flag =0;
     return tmp;
+}
+
+/* load tree */
+void load_node(node *tree, FILE *file)
+{
+    int targetn, num;
+    if (!fread(&targetn, sizeof(int), 1, file)) return;
+    if (!fread(&num, sizeof(int), 1, file)) return;
+    add_node(num, tree, targetn, PARENT, 1);
+    load_node(tree, file);
+}
+
+/* remove tree */
+void remove_tree(node *tree)
+{
+    if (!tree) return;
+    if (tree->left)
+        remove_tree(tree->left);
+    if (tree->right)
+        remove_tree(tree->right);
+    free(tree);
+}
+
+/* save tree */
+void write_node(node *tree, FILE *file)
+{
+    if (tree->parent)
+	{
+        fwrite(&tree->parent->num, sizeof(int), 1, file);
+        fwrite(&tree->num, sizeof(int), 1, file);
+    }
+    else 
+	{
+        fwrite(&tree->num, sizeof(int), 1, file);
+    }
+    if (tree->left) write_node(tree->left, file);
+    if (tree->right) write_node(tree->right, file);
 }
 
 int maximal_depth(node *tree, int n)
@@ -347,29 +358,27 @@ int maximal_depth(node *tree, int n)
     return n;
 }
 
-void remove_tree(node *tree)
+void check_print(node *tree, int n)
 {
-    if (!tree) return;
-    if (tree->left)
-        remove_tree(tree->left);
-    if (tree->right)
-        remove_tree(tree->right);
-    free(tree);
+    int i;
+    if (tree)
+	{
+        check_print(tree->right, n+3);
+        for (i=0; i<n; i++)
+            putchar(' ');
+        printf("%d\n", tree->num);
+        check_print(tree->left, n+3);
+    	}
 }
 
-void write_node(node *tree, FILE *file)
+void print_mas(node *tree)
 {
-    if (tree->parent)
+    if (tree)
 	{
-        fwrite(&tree->parent->num, sizeof(int), 1, file);
-        fwrite(&tree->num, sizeof(int), 1, file);
+        print_mas(tree->left);
+        printf("%d", tree->num);
+        print_mas(tree->right);
     }
-    else 
-	{
-        fwrite(&tree->num, sizeof(int), 1, file);
-    }
-    if (tree->left) write_node(tree->left, file);
-    if (tree->right) write_node(tree->right, file);
 }
 
 int fisheap(node *tree, int curdepth){
@@ -437,6 +446,7 @@ int main(int argc, char *argv[])
     FILE *file = 0;
     char command[500],flag = 8, *c=0;
 
+	/* Open file */
     if (argc > 1)
 	{
         if ((file = fopen(argv[1], "rb")) == 0)
@@ -453,6 +463,7 @@ int main(int argc, char *argv[])
     else
         printf("No tree was loaded from command line arguments\n");
 
+	/* Work with commands */
     while (flag)
 	{
         leavesum = internalnum = nodesnum = maxdepth = 0;
